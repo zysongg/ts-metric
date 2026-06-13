@@ -202,7 +202,7 @@ print(list_available_metrics())
 
 ## 高级功能
 
-### 可视化
+### 指标评估可视化
 
 ```python
 import timescore as tm
@@ -222,6 +222,32 @@ ax = tm.plot_crps_comparison(target, samples_dict)
 ```
 
 可选依赖：`pip install matplotlib`
+
+### 序列可视化
+
+```python
+import timescore as tm
+
+# Point prediction with lookback
+tm.plot_prediction(forecast, target, inputs, sample_id=0, channel=0)
+
+# Multi-channel prediction
+tm.plot_prediction_multi(forecast, target, inputs, channels=[0, 1, 2])
+
+# Probabilistic prediction with confidence intervals
+tm.plot_prob_prediction(samples, target, inputs, cl=(0.5, 0.9))
+
+# Point imputation (no lookback)
+tm.plot_imputation(imputed, target, mask, sample_id=0, channel=0)
+
+# Multi-channel imputation
+tm.plot_imputation_multi(imputed, target, mask, channels=[0, 1, 2])
+
+# Probabilistic imputation with confidence intervals
+tm.plot_prob_imputation(samples, target, mask, cl=(0.5, 0.9))
+```
+
+所有绘图使用 Times New Roman 字体，支持自定义 `ax` 参数以组合多图。
 
 ### 导出格式
 
