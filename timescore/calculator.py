@@ -15,8 +15,7 @@ from .metrics.prediction import point as pred_point
 from .metrics.prediction import probabilistic as pred_prob
 from .metrics.imputation import point as imp_point
 from .metrics.imputation import probabilistic as imp_prob
-from .metrics.generation import point as gen_point
-from .metrics.generation import probabilistic as gen_prob
+from .metrics.generation import metrics as gen_metrics
 from .metrics.anomaly import metrics as anom_metrics
 from .metrics.classification import metrics as cls_metrics
 
@@ -38,13 +37,9 @@ _METRIC_REGISTRY = {
         "funcs": imp_prob.PROB_METRIC_FUNCS,
         "defaults": imp_prob.PROB_METRICS,
     },
-    ("generation", "point"): {
-        "funcs": gen_point.POINT_METRIC_FUNCS,
-        "defaults": gen_point.POINT_METRICS,
-    },
-    ("generation", "probabilistic"): {
-        "funcs": gen_prob.PROB_METRIC_FUNCS,
-        "defaults": gen_prob.PROB_METRICS,
+    ("generation", "default"): {
+        "funcs": gen_metrics.METRIC_FUNCS,
+        "defaults": gen_metrics.METRICS,
     },
     ("anomaly", "default"): {
         "funcs": anom_metrics.METRIC_FUNCS,

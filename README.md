@@ -173,12 +173,13 @@ print(list_available_metrics())
 | point | MSE, RMSE, MAE, MAPE, MRE, sMAPE, ND | 点插补 |
 | probabilistic | CRPS, PICP, QICE, IntervalWidth | 概率插补 |
 
-### Generation（生成）
+### Generation（生成，TSGBench 风格）
 
-| Mode | 指标 | 说明 |
+| 类别 | 指标 | 说明 |
 |------|------|------|
-| point | Fidelity, DiscriminativeScore, Correlation, KLDivergence | 样本级 |
-| probabilistic | MMD, JSDivergence, LogLikelihood | 分布级 |
+| Feature-based | MDD, ACD, SD, KD | 边际分布、自相关、偏度、峰度差异 |
+| Distance-based | ED, DTW | 配对样本欧氏距离、DTW 距离 |
+| Model-based | DS, PS, C_FID | 判别分数、预测分数、Context-FID |
 
 ### Anomaly Detection（异常检测）
 

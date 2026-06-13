@@ -49,13 +49,13 @@ class TestMetricCalculator:
         assert "MSE" in results
         assert "MRE" in results
 
-    def test_generation_point(self):
+    def test_generation(self):
         real = torch.randn(100, 3, 24)
         gen = torch.randn(80, 3, 24)
-        calc = tm.MetricCalculator(task="generation", mode="point", metrics=["Fidelity", "KLDivergence"])
+        calc = tm.MetricCalculator(task="generation", mode="default", metrics=["MDD", "ED"])
         results = calc.compute(real, gen)
-        assert "Fidelity" in results
-        assert "KLDivergence" in results
+        assert "MDD" in results
+        assert "ED" in results
 
     def test_with_mask(self):
         mask = torch.ones(4, 3, 24)
