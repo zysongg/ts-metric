@@ -200,6 +200,52 @@ print(list_available_metrics())
 - `MSE`, `MAPE`, `sMAPE`, `MSIS`, `NRMSE` — 与 GluonTS 完全一致
 - `CRPS`, `CRPS_sum` — 与 K2VAE Evaluator 一致（<2% 聚合差异）
 
+## 发布到 PyPI
+
+### 1. 安装构建工具
+
+```bash
+pip install build twine
+```
+
+### 2. 构建分发包
+
+```bash
+python -m build
+```
+
+这会在 `dist/` 目录下生成 `.whl` 和 `.tar.gz` 文件。
+
+### 3. 上传到 PyPI
+
+```bash
+# 上传到正式 PyPI
+twine upload dist/*
+
+# 或先测试上传到 TestPyPI
+twine upload --repository testpypi dist/*
+```
+
+上传时需要输入 PyPI 用户名和密码（或 API token）。
+
+### 4. 使用 API Token（推荐）
+
+在 https://pypi.org/manage/account/token/ 创建 token，然后：
+
+```bash
+twine upload --username __token__ --password pypi-xxxxxxxx dist/*
+```
+
+### 5. 用户安装
+
+```bash
+# 从 PyPI 安装
+pip install timescore
+
+# 从 TestPyPI 安装
+pip install --index-url https://test.pypi.org/simple/ timescore
+```
+
 ## 运行测试
 
 ```bash
