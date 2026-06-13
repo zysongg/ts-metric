@@ -80,94 +80,62 @@ $$\text{Corr} = \frac{1}{B \cdot C} \sum_{b,c} \text{corr}(y_{b,c,:}, \hat{y}_{b
 
 ## Probabilistic Metrics (概率指标)
 
-### CRPS (Continuous Ranked Probability Score)
+### CRPS — K2VAE/DeepAR 惯例（默认）
 
-$$\text{CRPS} = \mathbb{E}|X - y| - \frac{1}{2} \mathbb{E}|X - X'|$$
+$$\text{CRPS} = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} \frac{\text{QL}(q)}{\sum |y|}$$
 
-其中 $X, X'$ 是从预测分布中独立抽取的样本。对于 $S$ 个集成样本的精确计算：
+其中 $\mathcal{Q} = \{0.1, 0.2, \ldots, 0.9\}$，$\text{QL}(q)$ 是分位数损失：
 
-$$\text{CRPS} = \frac{1}{S} \sum_{s=1}^{S} |x_s - y| - \frac{1}{S^2} \sum_{s=1}^{S} (2s - 1 - S) \cdot x_{(s)}$$
+$$\text{QL}(q) = 2 \sum_{b,c,t} \left|(\hat{y}^{(q)} - y) \cdot (\mathbb{1}[y \leq \hat{y}^{(q)}] - q)\right|$$
+
+- **含义**: 加权分位数损失的均值，与 K2VAE、DeepAR 论文报告的 "CRPS" 一致
+- **越小越好**
+- **对比论文时**应使用此版本
+
+### CRPS_exact — 精确公式
+
+$$\text{CRPS\_exact} = \mathbb{E}|X - y| - \frac{1}{2} \mathbb{E}|X - X'|$$
+
+对于 $S$ 个集成样本的精确计算：
+
+$$\text{CRPS\_exact} = \frac{1}{S} \sum_{s=1}^{S} |x_s - y| - \frac{1}{S^2} \sum_{s=1}^{S} (2s - 1 - S) \cdot x_{(s)}$$
 
 其中 $x_{(s)}$ 是排序后的第 $s$ 个样本。
 
-- **含义**: 连续排序概率得分，衡量预测分布与真实值的整体匹配度
+- **含义**: 数学上严格的 CRPS，使用所有样本信息
 - **越小越好**，0 表示完美预测
-- **实现**: `crps()` 使用精确公式，$O(S \log S)$ 复杂度（通过排序优化）
+- **复杂度**: $O(S \log S)$（通过排序优化）
 - **验证**: 与 `CRPS.CRPS` 包（NsDiff 参考实现）结果完全一致
+- **对比论文时**注意：大部分论文报告的 CRPS 实际是上面的 K2VAE 版本
 
-### CRPS_quantile (分位数近似)
-
-$$\text{CRPS\_quantile} \approx \frac{2}{Q} \sum_{q \in \mathcal{Q}} \text{QL}(q, y, \hat{y}^{(q)})$$
-
-其中 $\mathcal{Q} = \{0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95\}$ 是分位数集合，$\text{QL}$ 是分位数损失：
-
-$$\text{QL}(q, y, \hat{y}) = \max(q \cdot (y - \hat{y}), (q-1) \cdot (y - \hat{y}))$$
-
-- **含义**: CRPS 的分位数损失近似（GluonTS/DeepAR 风格）
-- **越小越好**
-- **精度**: 约 4-5% 误差（受 7 个分位点限制），速度更快
-
-### CRPS_sum
+### CRPS_sum — 特征求和版（K2VAE 惯例）
 
 $$\text{CRPS\_sum} = \text{CRPS}\left(\sum_c y_{b,c,t}, \sum_c s_{b,s,c,t}\right)$$
 
-- **含义**: 对所有特征求和后的 CRPS，衡量边际分布质量
+- **含义**: 对所有特征求和后计算的 CRPS，衡量边际分布质量
+- **越小越好**
+- **与 K2VAE 的 CRPS-Sum 一致**
+
+### CRPS_sum_exact — 精确版特征求和
+
+$$\text{CRPS\_sum\_exact} = \text{CRPS\_exact}\left(\sum_c y_{b,c,t}, \sum_c s_{b,s,c,t}\right)$$
+
+- **含义**: 对所有特征求和后计算的精确 CRPS
 - **越小越好**
 
 ---
 
-### GluonTS 兼容概率指标
-
-以下指标的公式与 GluonTS Evaluator 完全一致，已通过数值验证。
-
-#### QuantileLoss[q] — 分位数损失
-
-$$\text{QL}(q) = 2 \sum_{b,c,t} \left|(\hat{y}^{(q)} - y) \cdot (\mathbb{1}[y \leq \hat{y}^{(q)}] - q)\right|$$
-
-默认分位点: $q \in \{0.1, 0.2, \ldots, 0.9\}$
-
-- **含义**: 每个分位点水平的加权 pinball loss（sum 而非 mean）
-- **越小越好**
-- **返回**: `dict` 映射 $q$ → 标量
-
-#### wQuantileLoss[q] — 加权分位数损失
-
-$$\text{wQL}(q) = \frac{\text{QL}(q)}{\sum |y|}$$
-
-- **含义**: QuantileLoss 除以真实值绝对值之和，实现跨序列可比
-- **越小越好**
-
-#### mean_wQuantileLoss
-
-$$\text{mean\_wQuantileLoss} = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} \text{wQL}(q)$$
-
-- **含义**: 所有分位点的 wQuantileLoss 均值，GluonTS 的核心汇总指标
-- **越小越好**
-
-#### mean_absolute_QuantileLoss
-
-$$\text{mean\_absolute\_QuantileLoss} = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} \text{QL}(q)$$
-
-- **含义**: 所有分位点的 QuantileLoss 均值
-- **越小越好**
-
-#### Coverage[q] — 覆盖率
-
-$$\text{Coverage}(q) = \frac{1}{B \cdot C \cdot T} \sum_{b,c,t} \mathbb{1}[y_{b,c,t} \leq \hat{y}^{(q)}_{b,c,t}]$$
-
-- **含义**: 真实值低于分位数预测的比例
-- **范围**: $[0, 1]$
-- **理想值**: $q$（如 $q=0.5$ 时理想覆盖率为 0.5）
-- **返回**: `dict` 映射 $q$ → 标量
-
-#### MAE_Coverage
+### MAE_Coverage — 校准质量
 
 $$\text{MAE\_Coverage} = \frac{1}{|\mathcal{Q}|} \sum_{q \in \mathcal{Q}} |\text{Coverage}(q) - q|$$
 
+其中 $\text{Coverage}(q) = \text{mean}(\mathbb{1}[y \leq \hat{y}^{(q)}])$。
+
 - **含义**: 覆盖率与期望覆盖率的平均绝对偏差，衡量校准质量
 - **越小越好**，0 表示完美校准
+- **参考**: GluonTS Evaluator 的 MAE_Coverage
 
-#### MSIS (Mean Scaled Interval Score) — M4 竞赛指标
+### MSIS (Mean Scaled Interval Score) — M4 竞赛指标
 
 $$\text{MSIS} = \frac{1}{\text{seasonal\_error}} \cdot \text{mean}\left(U - L + \frac{2}{\alpha}(L - y)\mathbb{1}[y < L] + \frac{2}{\alpha}(y - U)\mathbb{1}[y > U]\right)$$
 
@@ -205,13 +173,6 @@ $$\text{MSE\_median} = \frac{1}{B \cdot C \cdot T} \sum_{b,c,t} (y_{b,c,t} - \ti
 - **含义**: 中位数预测的 MSE/MAE
 - **越小越好**
 
-### Calibration Error
-
-$$\text{Calibration} = \frac{1}{L} \sum_{q \in \mathcal{Q}} \left| \frac{1}{B \cdot C \cdot T} \sum_{b,c,t} \mathbb{1}[y_{b,c,t} \leq \hat{y}^{(q)}_{b,c,t}] - q \right|$$
-
-- **含义**: 校准误差，衡量预测分位数与实际覆盖率的偏差
-- **越小越好**
-
 ### Log-Likelihood
 
 $$\text{LL} = \frac{1}{B \cdot C \cdot T} \sum_{b,c,t} -\frac{1}{2} \left( \log(2\pi \sigma^2_{b,c,t}) + \frac{(y_{b,c,t} - \mu_{b,c,t})^2}{\sigma^2_{b,c,t}} \right)$$
@@ -220,6 +181,16 @@ $$\text{LL} = \frac{1}{B \cdot C \cdot T} \sum_{b,c,t} -\frac{1}{2} \left( \log(
 
 - **含义**: 高斯假设下的对数似然
 - **越大越好**
+
+---
+
+## 内部工具函数（返回 dict）
+
+以下函数返回每个分位点级别的指标，用于自定义分析（如画覆盖率曲线）：
+
+- `quantile_loss(target, samples)` → `{q: QL(q)}`
+- `w_quantile_loss(target, samples)` → `{q: wQL(q)}`
+- `coverage(target, samples)` → `{q: Coverage(q)}`
 
 ---
 
