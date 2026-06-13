@@ -1,30 +1,33 @@
 """ts_metric: Time series metric computation library.
 
-Supports three tasks: prediction, imputation, generation.
-Each task has point (regression) and probabilistic (distribution) metrics.
+Supports five tasks: prediction, imputation, generation, anomaly detection, classification.
 
 Quick start:
     import ts_metric as tm
 
-    # Functional API
-    mse_val = tm.prediction.mse(target, forecast)
-    crps_val = tm.prediction.crps(target, samples)
+    # Prediction
+    mse = tm.prediction.mse(target, forecast)
+    crps = tm.prediction.crps(target, samples)
 
-    # Aggregator API
-    calc = tm.MetricCalculator(task="prediction", mode="point")
-    results = calc.compute(target, forecast)
+    # Anomaly Detection
+    pa_f1 = tm.anomaly.pa_f1(labels, preds)
+
+    # Classification
+    acc = tm.classification.accuracy(labels, preds)
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from . import metrics, utils
-from .metrics import prediction, imputation, generation
+from .metrics import prediction, imputation, generation, anomaly, classification
 from .calculator import MetricCalculator, list_available_metrics
 
 __all__ = [
     "prediction",
     "imputation",
     "generation",
+    "anomaly",
+    "classification",
     "MetricCalculator",
     "list_available_metrics",
 ]

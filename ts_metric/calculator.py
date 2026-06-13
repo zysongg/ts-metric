@@ -17,6 +17,8 @@ from .metrics.imputation import point as imp_point
 from .metrics.imputation import probabilistic as imp_prob
 from .metrics.generation import point as gen_point
 from .metrics.generation import probabilistic as gen_prob
+from .metrics.anomaly import metrics as anom_metrics
+from .metrics.classification import metrics as cls_metrics
 
 
 _METRIC_REGISTRY = {
@@ -44,6 +46,14 @@ _METRIC_REGISTRY = {
         "funcs": gen_prob.PROB_METRIC_FUNCS,
         "defaults": gen_prob.PROB_METRICS,
     },
+    ("anomaly", "default"): {
+        "funcs": anom_metrics.METRIC_FUNCS,
+        "defaults": anom_metrics.METRICS,
+    },
+    ("classification", "default"): {
+        "funcs": cls_metrics.METRIC_FUNCS,
+        "defaults": cls_metrics.METRICS,
+    },
 }
 
 
@@ -51,8 +61,8 @@ class MetricCalculator:
     """Unified metric aggregator.
 
     Args:
-        task: "prediction", "imputation", or "generation".
-        mode: "point" or "probabilistic".
+        task: "prediction", "imputation", "generation", "anomaly", or "classification".
+        mode: "point", "probabilistic", or "default" (for anomaly/classification).
         metrics: list of metric names (case-insensitive). If None, uses all defaults.
     """
 
